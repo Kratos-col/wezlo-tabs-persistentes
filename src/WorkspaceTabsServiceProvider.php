@@ -16,7 +16,8 @@ class WorkspaceTabsServiceProvider extends PackageServiceProvider
     {
         $package->name(static::$name)
             ->hasConfigFile()
-            ->hasViews();
+            ->hasViews()
+            ->hasTranslations();
     }
 
     public function packageBooted(): void

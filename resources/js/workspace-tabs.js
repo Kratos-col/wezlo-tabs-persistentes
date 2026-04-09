@@ -17,6 +17,7 @@ export default function workspaceTabs({
     excludeUrls,
     enableContextMenu,
     enableDragReorder,
+    translations = {},
 }) {
     return {
         tabs: Alpine.$persist([]).as(`${persistKey}_tabs`),
@@ -147,7 +148,7 @@ export default function workspaceTabs({
             const tab = {
                 id: generateId(),
                 url,
-                label: label || 'New Tab',
+                label: label || translations.new_tab || 'New Tab',
                 pinned,
                 order: this.tabs.length,
                 createdAt: Date.now(),
@@ -346,7 +347,7 @@ export default function workspaceTabs({
                     if (this.isExcluded(path)) return
 
                     e.preventDefault()
-                    const tab = this.addTab(path, 'Loading...')
+                    const tab = this.addTab(path, translations.loading || 'Loading...')
                     // Don't navigate — just add the tab. User can click it to load.
                 } catch {
                     // Invalid URL, ignore
@@ -369,7 +370,7 @@ export default function workspaceTabs({
 
                             e.preventDefault()
                             e.stopPropagation()
-                            this.addTab(path, 'Loading...')
+                            this.addTab(path, translations.loading || 'Loading...')
                         } catch {
                             // Invalid URL, ignore
                         }
