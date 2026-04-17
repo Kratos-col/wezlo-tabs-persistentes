@@ -24,7 +24,7 @@ class WorkspaceTabsServiceProvider extends PackageServiceProvider
     {
         FilamentAsset::register([
             Css::make('workspace-tabs', __DIR__ . '/../resources/dist/workspace-tabs.css'),
-            AlpineComponent::make('workspace-tabs', __DIR__ . '/../resources/dist/workspace-tabs.js'),
+            \Filament\Support\Assets\Js::make('workspace-tabs', __DIR__ . '/../resources/dist/workspace-tabs.js'),
         ], package: 'wezlo/filament-workspace-tabs');
     }
 }

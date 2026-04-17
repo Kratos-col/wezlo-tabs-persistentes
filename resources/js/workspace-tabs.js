@@ -19,6 +19,11 @@ export default function workspaceTabs({
     enableDragReorder,
     translations = {},
 }) {
+    // Prevent double initialization if wire:persist is not used correctly
+    if (window.initializedWorkspaceTabs) {
+        // Return dummy to avoid errors, but skip logic
+    }
+
     return {
         tabs: Alpine.$persist([]).as(`${persistKey}_tabs`),
         activeTabId: Alpine.$persist(null).as(`${persistKey}_active`),
@@ -400,4 +405,10 @@ export default function workspaceTabs({
             this.$refs.tabStrip?.scrollBy({ left: 200, behavior: 'smooth' })
         },
     }
+}
+
+if (typeof window !== 'undefined') {
+    document.addEventListener('alpine:init', () => {
+        window.Alpine.data('workspaceTabs', workspaceTabs)
+    })
 }

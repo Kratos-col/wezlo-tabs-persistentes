@@ -1,6 +1,6 @@
 <div
-    x-load
-    x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('workspace-tabs', 'wezlo/filament-workspace-tabs') }}"
+    wire:persist="fi-workspace-tabs"
+    x-cloak
     x-data="workspaceTabs({
         maxTabs: @js($maxTabs),
         persistKey: @js($persistKey),
