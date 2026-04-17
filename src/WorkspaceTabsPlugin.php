@@ -12,7 +12,7 @@ class WorkspaceTabsPlugin implements Plugin
 {
     protected int $maxTabs = 20;
 
-    protected string $persistKey = 'filament_workspace_tabs';
+    protected string $persistKey = 'wezlo_tabs_persistentes';
 
     /** @var array<string> */
     protected array $excludeUrls = [];
