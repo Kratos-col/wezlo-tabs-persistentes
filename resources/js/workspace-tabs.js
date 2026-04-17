@@ -107,6 +107,13 @@ function workspaceTabs({
             return link ? link.href : null
         },
 
+        extractTitle() {
+            const full = document.title
+            const separator = ' - '
+            const idx = full.lastIndexOf(separator)
+            return idx > 0 ? full.substring(0, idx).trim() : full.trim()
+        },
+
         syncCurrentPage() {
             const url = this.currentUrl()
             if (this.isExcluded(url)) return
