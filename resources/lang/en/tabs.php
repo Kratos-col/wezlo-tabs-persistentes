@@ -13,4 +13,5 @@ return [
     ],
     'new_tab' => 'New Tab',
     'loading' => 'Loading...',
+    'close_tab' => 'Close tab',
 ];
