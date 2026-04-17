@@ -84,19 +84,22 @@ function workspaceTabs({
         },
 
         init() {
-            // Prevent double initialization
-            if (window[`tabs_init_${persistKey}`]) return
-            window[`tabs_init_${persistKey}`] = true
+            // Sync immediately on boot to handle initial state or full reloads
+            this.$nextTick(() => this.syncCurrentPage())
 
-            this.syncCurrentPage()
-
-            document.addEventListener('livewire:navigated', () => {
+            // Global listeners should be attached to the document/window
+            // each instance needs to react to these to stay in sync
+            const handleNavigated = () => {
                 this.$nextTick(() => this.syncCurrentPage())
-            })
+            }
 
-            window.addEventListener('popstate', () => {
+            const handlePopstate = () => {
                 this.isPopstate = true
-            })
+                this.$nextTick(() => this.syncCurrentPage())
+            }
+
+            document.addEventListener('livewire:navigated', handleNavigated)
+            window.addEventListener('popstate', handlePopstate)
 
             this.interceptNavigation()
 
