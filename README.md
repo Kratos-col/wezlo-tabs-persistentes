@@ -1,4 +1,4 @@
-# Filament Workspace Tabs
+# Wezlo Tabs Persistentes
 
 Browser-like tabs for Filament panels. Open multiple pages in tabs without losing context, drag to reorder, pin frequently accessed pages, and right-click for quick actions.
 
@@ -24,7 +24,7 @@ Browser-like tabs for Filament panels. Open multiple pages in tabs without losin
 ## Installation
 
 ```bash
-composer require wezlo/filament-workspace-tabs
+composer require wezlo/wezlo-tabs-persistentes
 ```
 
 ## Setup
@@ -34,7 +34,7 @@ composer require wezlo/filament-workspace-tabs
 Add the plugin to your panel provider:
 
 ```php
-use Wezlo\FilamentWorkspaceTabs\WorkspaceTabsPlugin;
+use Wezlo\TabsPersistentes\WorkspaceTabsPlugin;
 
 public function panel(Panel $panel): Panel
 {
@@ -51,7 +51,7 @@ Add the package views to your Filament theme CSS so Tailwind can scan utility cl
 
 ```css
 /* resources/css/filament/{panel}/theme.css */
-@source '../../../../vendor/wezlo/filament-workspace-tabs/resources/views/**/*';
+@source '../../../../vendor/wezlo/wezlo-tabs-persistentes/resources/views/**/*';
 ```
 
 Then rebuild your frontend assets:
@@ -67,7 +67,7 @@ All options are available as fluent methods on the plugin:
 ```php
 WorkspaceTabsPlugin::make()
     ->maxTabs(25)                          // Maximum open tabs (default: 20)
-    ->persistKey('my_tabs')                // localStorage key prefix (default: 'filament_workspace_tabs')
+    ->persistKey('my_tabs')                // localStorage key prefix (default: 'wezlo_tabs_persistentes')
     ->excludeUrls(['/admin/login'])        // URL prefixes to never track as tabs
     ->contextMenu(false)                   // Disable right-click context menu
     ->dragReorder(false)                   // Disable drag-to-reorder
@@ -116,7 +116,7 @@ When tabs are closed, they're stored in a history list. Click the dropdown arrow
 ## Publishing config
 
 ```bash
-php artisan vendor:publish --tag="filament-workspace-tabs-config"
+php artisan vendor:publish --tag="wezlo-tabs-persistentes-config"
 ```
 
 ## License
