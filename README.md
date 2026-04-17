@@ -23,9 +23,23 @@ Browser-like tabs for Filament panels. Open multiple pages in tabs without losin
 
 ## Installation
 
+You can install the package via composer:
+
 ```bash
 composer require wezlo/wezlo-tabs-persistentes
 ```
+
+> [!NOTE]
+> If the package is not yet published to Packagist, you can install it directly from GitHub by adding this to your project's `composer.json`:
+>
+> ```json
+> "repositories": [
+>     {
+>         "type": "vcs",
+>         "url": "https://github.com/Kratos-col/wezlo-tabs-persistentes"
+>     }
+> ],
+> ```
 
 ## Setup
 
