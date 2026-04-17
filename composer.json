@@ -3,7 +3,6 @@
     "description": "Browser-like workspace tabs for Filament panels",
     "keywords": ["laravel", "filament", "tabs", "workspace", "browser-tabs"],
     "license": "MIT",
-    "version": "1.0.0",
     "type": "library",
     "require": {
         "php": "^8.2",
