@@ -51,10 +51,10 @@
                 :title="tab.label"
             >
                 {{-- Tab icon (favicon) --}}
-                <template x-if="tab.icon">
+                <template x-if="tab.icon && (tab.icon.startsWith('http') || tab.icon.startsWith('/') || tab.icon.startsWith('data:'))">
                     <img :src="tab.icon" class="fi-workspace-tab-icon size-3.5 shrink-0 rounded-sm" />
                 </template>
-                <template x-if="!tab.icon && !tab.pinned">
+                <template x-if="(!tab.icon || !(tab.icon.startsWith('http') || tab.icon.startsWith('/') || tab.icon.startsWith('data:'))) && !tab.pinned">
                     <x-filament::icon
                         icon="heroicon-m-document"
                         class="fi-workspace-tab-icon size-3.5 shrink-0 text-gray-400 dark:text-gray-500"
@@ -67,14 +67,15 @@
                     class="fi-workspace-tab-label"
                 ></span>
 
-                {{-- Close button (not for pinned tabs) --}}
+                {{-- Close button (available for all non-pinned tabs) --}}
                 <template x-if="!tab.pinned">
                     <button
                         x-on:click.stop="closeTab(tab.id)"
                         type="button"
                         class="fi-workspace-tab-close"
+                        title="Close tab"
                     >
-                        <svg class="size-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <svg class="size-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
                         </svg>
                     </button>

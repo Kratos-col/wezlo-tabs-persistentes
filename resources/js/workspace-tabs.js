@@ -37,12 +37,18 @@ function workspaceTabs({
     const isExcluded = (url) => excludeUrls.some((pattern) => url.startsWith(pattern))
 
     const urlsMatch = (url1, url2) => {
+        if (!url1 || !url2) return false
         try {
-            const path1 = url1.split('?')[0]
-            const path2 = url2.split('?')[0]
-            return path1 === path2
+            const u1 = url1 instanceof URL ? url1 : new URL(url1, window.location.origin)
+            const u2 = url2 instanceof URL ? url2 : new URL(url2, window.location.origin)
+            
+            // Compare pathname and search (ignoring origin/hash)
+            return u1.pathname === u2.pathname && u1.search === u2.search
         } catch {
-            return url1 === url2
+            // Fallback to simple string comparison of paths
+            const path1 = url1.split('?')[0].split('#')[0]
+            const path2 = url2.split('?')[0].split('#')[0]
+            return path1 === path2
         }
     }
 
@@ -126,34 +132,44 @@ function workspaceTabs({
 
             const label = extractTitle()
             const icon = fetchIcon()
-            const existing = this.tabs.find((t) => urlsMatch(t.url, url))
+            
+            // Find existing tab with strict matching
+            const existingIdx = this.tabs.findIndex((t) => urlsMatch(t.url, url))
 
-            if (existing) {
+            if (existingIdx !== -1) {
+                const existing = this.tabs[existingIdx]
+                // console.log('[WorkspaceTabs] Syncing existing tab:', label)
                 existing.label = label
                 existing.icon = icon
                 existing.url = url
                 this.activeTabId = existing.id
             } else {
+                // console.log('[WorkspaceTabs] Adding new tab for:', url)
                 this.addTab(url, label, false, icon)
             }
 
             this.isPopstate = false
+            this.$nextTick(() => this.updateScrollState())
         },
 
         addTab(url, label, pinned = false, icon = null) {
+            // Check if already reached max tabs limit
             if (this.tabs.length >= maxTabs) {
-                const oldest = this.unpinnedTabs.find(
+                const oldestUnpinned = this.unpinnedTabs.find(
                     (t) => t.id !== this.activeTabId,
                 )
-                if (oldest) {
-                    this.removeTab(oldest.id, false)
+                if (oldestUnpinned) {
+                    this.removeTab(oldestUnpinned.id, false)
                 }
             }
 
+            const tabId = generateId()
+            const tabLabel = label || translations.new_tab || 'New Tab'
+            
             const tab = {
-                id: generateId(),
+                id: tabId,
                 url,
-                label: label || translations.new_tab || 'New Tab',
+                label: tabLabel,
                 icon: icon || fetchIcon(),
                 pinned,
                 order: this.tabs.length,
@@ -161,7 +177,14 @@ function workspaceTabs({
             }
 
             this.tabs.push(tab)
-            this.activeTabId = tab.id
+            this.activeTabId = tabId
+
+            // console.log('[WorkspaceTabs] Tab added:', tabLabel, tabId)
+            
+            this.$nextTick(() => {
+                this.reindex()
+                this.updateScrollState()
+            })
 
             return tab
         },
