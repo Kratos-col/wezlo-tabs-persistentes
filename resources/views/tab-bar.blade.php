@@ -50,11 +50,15 @@
                 :aria-selected="tab.id === activeTabId"
                 :title="tab.label"
             >
-                {{-- Pin icon for pinned tabs --}}
-                <template x-if="tab.pinned">
-                    <svg class="fi-workspace-tab-pin-icon size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.504l-2.879 1.44a.75.75 0 0 0 .758 1.292l2.621-1.31V15.25a.75.75 0 0 0 1.5 0v-4.504l2.879-1.44a.75.75 0 1 0-.758-1.292l-2.621 1.31V4.75Z" />
-                    </svg>
+                {{-- Tab icon (favicon) --}}
+                <template x-if="tab.icon">
+                    <img :src="tab.icon" class="fi-workspace-tab-icon size-3.5 shrink-0 rounded-sm" />
+                </template>
+                <template x-if="!tab.icon && !tab.pinned">
+                    <x-filament::icon
+                        icon="heroicon-m-document"
+                        class="fi-workspace-tab-icon size-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                    />
                 </template>
 
                 {{-- Tab label --}}

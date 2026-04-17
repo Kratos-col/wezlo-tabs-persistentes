@@ -102,11 +102,9 @@ function workspaceTabs({
             return excludeUrls.some((pattern) => url.startsWith(pattern))
         },
 
-        extractTitle() {
-            const full = document.title
-            const separator = ' - '
-            const idx = full.lastIndexOf(separator)
-            return idx > 0 ? full.substring(0, idx).trim() : full.trim()
+        fetchIcon() {
+            const link = document.querySelector('link[rel*="icon"]')
+            return link ? link.href : null
         },
 
         syncCurrentPage() {
@@ -114,16 +112,18 @@ function workspaceTabs({
             if (this.isExcluded(url)) return
 
             const label = this.extractTitle()
+            const icon = this.fetchIcon()
             const existing = this.tabs.find((t) => this.urlsMatch(t.url, url))
 
             if (existing) {
-                // Already have a tab for this URL — just activate it
+                // Already have a tab for this URL — update label/icon if changed
                 existing.label = label
+                existing.icon = icon
                 existing.url = url
                 this.activeTabId = existing.id
             } else {
                 // New URL — always open a new tab
-                this.addTab(url, label)
+                this.addTab(url, label, false, icon)
             }
 
             this.isPopstate = false
@@ -140,7 +140,7 @@ function workspaceTabs({
             }
         },
 
-        addTab(url, label, pinned = false) {
+        addTab(url, label, pinned = false, icon = null) {
             if (this.tabs.length >= maxTabs) {
                 const oldest = this.unpinnedTabs.find(
                     (t) => t.id !== this.activeTabId,
@@ -154,6 +154,7 @@ function workspaceTabs({
                 id: generateId(),
                 url,
                 label: label || translations.new_tab || 'New Tab',
+                icon: icon || this.fetchIcon(),
                 pinned,
                 order: this.tabs.length,
                 createdAt: Date.now(),
