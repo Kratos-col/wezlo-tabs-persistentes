@@ -28,7 +28,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Wezlo\\FilamentWorkspaceTabs\\WorkspaceTabsServiceProvider"
+                "Wezlo\\TabsPersistentes\\WorkspaceTabsServiceProvider"
             ]
         }
     },
