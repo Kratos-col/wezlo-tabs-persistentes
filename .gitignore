@@ -1,0 +1,11 @@
+/vendor
+/node_modules
+.phpunit.result.cache
+.pest_tracker.cache
+composer.lock
+.env
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+/dist
