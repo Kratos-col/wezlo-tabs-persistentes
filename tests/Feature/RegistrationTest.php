@@ -1,15 +1,15 @@
 <?php
 
-namespace Wezlo\FilamentWorkspaceTabs\Tests\Feature;
+namespace Wezlo\TabsPersistentes\Tests\Feature;
 
-use Wezlo\FilamentWorkspaceTabs\WorkspaceTabsServiceProvider;
+use Wezlo\TabsPersistentes\WorkspaceTabsServiceProvider;
 
 it('registers the service provider', function () {
     expect(app()->getProvider(WorkspaceTabsServiceProvider::class))->not->toBeNull();
 });
 
 it('can load the tab bar view', function () {
-    $view = view('filament-workspace-tabs::tab-bar', [
+    $view = view('wezlo-tabs-persistentes::tab-bar', [
         'maxTabs' => 20,
         'persistKey' => 'test_key',
         'excludeUrls' => [],

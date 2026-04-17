@@ -1,6 +1,6 @@
 <?php
 
-namespace Wezlo\FilamentWorkspaceTabs;
+namespace Wezlo\TabsPersistentes;
 
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Css;
@@ -10,7 +10,7 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class WorkspaceTabsServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'filament-workspace-tabs';
+    public static string $name = 'wezlo-tabs-persistentes';
 
     public function configurePackage(Package $package): void
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Wezlo\FilamentWorkspaceTabs;
+namespace Wezlo\TabsPersistentes;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -28,7 +28,7 @@ class WorkspaceTabsPlugin implements Plugin
 
     public function getId(): string
     {
-        return 'filament-workspace-tabs';
+        return 'wezlo-tabs-persistentes';
     }
 
     public function maxTabs(int $maxTabs): static
@@ -97,7 +97,7 @@ class WorkspaceTabsPlugin implements Plugin
     {
         FilamentView::registerRenderHook(
             PanelsRenderHook::TOPBAR_AFTER,
-            fn (): View => view('filament-workspace-tabs::tab-bar', [
+            fn (): View => view('wezlo-tabs-persistentes::tab-bar', [
                 'maxTabs' => $this->maxTabs,
                 'persistKey' => $this->persistKey . '_' . $panel->getId(),
                 'excludeUrls' => $this->excludeUrls,

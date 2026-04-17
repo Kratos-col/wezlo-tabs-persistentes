@@ -1,5 +1,5 @@
 {
-    "name": "wezlo/filament-workspace-tabs",
+    "name": "wezlo/wezlo-tabs-persistentes",
     "description": "Browser-like workspace tabs for Filament panels",
     "keywords": ["laravel", "filament", "tabs", "workspace", "browser-tabs"],
     "license": "MIT",
@@ -17,12 +17,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Wezlo\\FilamentWorkspaceTabs\\": "src/"
+            "Wezlo\\TabsPersistentes\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Wezlo\\FilamentWorkspaceTabs\\Tests\\": "tests/"
+            "Wezlo\\TabsPersistentes\\Tests\\": "tests/"
         }
     },
     "extra": {

@@ -1,12 +1,12 @@
 <?php
 
-namespace Wezlo\FilamentWorkspaceTabs\Tests;
+namespace Wezlo\TabsPersistentes\Tests;
 
 use Filament\FilamentServiceProvider;
 use Filament\Support\SupportServiceProvider;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Wezlo\FilamentWorkspaceTabs\WorkspaceTabsServiceProvider;
+use Wezlo\TabsPersistentes\WorkspaceTabsServiceProvider;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class TestCase extends Orchestra
