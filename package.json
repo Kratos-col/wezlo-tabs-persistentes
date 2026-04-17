@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "build:js": "esbuild resources/js/workspace-tabs.js --bundle --outdir=resources/dist --minify --format=esm",
+        "build:js": "esbuild resources/js/workspace-tabs.js --bundle --outdir=resources/dist --minify --format=iife",
         "build:css": "cp resources/css/workspace-tabs.css resources/dist/workspace-tabs.css",
         "build": "npm run build:js && npm run build:css"
     },

@@ -11,7 +11,7 @@ function generateId() {
     })
 }
 
-export default function workspaceTabs({
+function workspaceTabs({
     maxTabs,
     persistKey,
     excludeUrls,
