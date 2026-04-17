@@ -19,9 +19,31 @@ function workspaceTabs({
     enableDragReorder,
     translations = {},
 }) {
-    // Prevent double initialization if wire:persist is not used correctly
-    if (window.initializedWorkspaceTabs) {
-        // Return dummy to avoid errors, but skip logic
+    // Helper functions in closure scope (more robust than 'this' methods)
+    const fetchIcon = () => {
+        const link = document.querySelector('link[rel*="icon"]')
+        return link ? link.href : null
+    }
+
+    const extractTitle = () => {
+        const full = document.title
+        const separator = ' - '
+        const idx = full.lastIndexOf(separator)
+        return idx > 0 ? full.substring(0, idx).trim() : full.trim()
+    }
+
+    const currentUrl = () => window.location.pathname + window.location.search
+
+    const isExcluded = (url) => excludeUrls.some((pattern) => url.startsWith(pattern))
+
+    const urlsMatch = (url1, url2) => {
+        try {
+            const path1 = url1.split('?')[0]
+            const path2 = url2.split('?')[0]
+            return path1 === path2
+        } catch {
+            return url1 === url2
+        }
     }
 
     return {
@@ -55,6 +77,10 @@ function workspaceTabs({
         },
 
         init() {
+            // Prevent double initialization
+            if (window[`tabs_init_${persistKey}`]) return
+            window[`tabs_init_${persistKey}`] = true
+
             this.syncCurrentPage()
 
             document.addEventListener('livewire:navigated', () => {
@@ -94,57 +120,24 @@ function workspaceTabs({
             })
         },
 
-        currentUrl() {
-            return window.location.pathname + window.location.search
-        },
-
-        isExcluded(url) {
-            return excludeUrls.some((pattern) => url.startsWith(pattern))
-        },
-
-        fetchIcon() {
-            const link = document.querySelector('link[rel*="icon"]')
-            return link ? link.href : null
-        },
-
-        extractTitle() {
-            const full = document.title
-            const separator = ' - '
-            const idx = full.lastIndexOf(separator)
-            return idx > 0 ? full.substring(0, idx).trim() : full.trim()
-        },
-
         syncCurrentPage() {
-            const url = this.currentUrl()
-            if (this.isExcluded(url)) return
+            const url = currentUrl()
+            if (isExcluded(url)) return
 
-            const label = this.extractTitle()
-            const icon = this.fetchIcon()
-            const existing = this.tabs.find((t) => this.urlsMatch(t.url, url))
+            const label = extractTitle()
+            const icon = fetchIcon()
+            const existing = this.tabs.find((t) => urlsMatch(t.url, url))
 
             if (existing) {
-                // Already have a tab for this URL — update label/icon if changed
                 existing.label = label
                 existing.icon = icon
                 existing.url = url
                 this.activeTabId = existing.id
             } else {
-                // New URL — always open a new tab
                 this.addTab(url, label, false, icon)
             }
 
             this.isPopstate = false
-        },
-
-        urlsMatch(url1, url2) {
-            // Match on pathname only, ignoring table state query params
-            try {
-                const path1 = url1.split('?')[0]
-                const path2 = url2.split('?')[0]
-                return path1 === path2
-            } catch {
-                return url1 === url2
-            }
         },
 
         addTab(url, label, pinned = false, icon = null) {
@@ -161,7 +154,7 @@ function workspaceTabs({
                 id: generateId(),
                 url,
                 label: label || translations.new_tab || 'New Tab',
-                icon: icon || this.fetchIcon(),
+                icon: icon || fetchIcon(),
                 pinned,
                 order: this.tabs.length,
                 createdAt: Date.now(),
@@ -177,7 +170,7 @@ function workspaceTabs({
             const tab = this.tabs.find((t) => t.id === tabId)
             if (!tab) return
 
-            if (this.urlsMatch(tab.url, this.currentUrl())) {
+            if (urlsMatch(tab.url, currentUrl())) {
                 this.activeTabId = tabId
                 return
             }
@@ -272,7 +265,6 @@ function workspaceTabs({
             )
         },
 
-        // Context menu
         openContextMenu(event, tabId) {
             if (!enableContextMenu) return
             event.preventDefault()
@@ -294,7 +286,6 @@ function workspaceTabs({
             return this.tabs.find((t) => t.id === this.contextMenu.tabId)
         },
 
-        // Drag reorder
         initSortable() {
             const strip = this.$refs.tabStrip
             if (!strip) return
@@ -309,7 +300,6 @@ function workspaceTabs({
                     const tabId = evt.item.dataset.tabId
                     if (!tabId) return
 
-                    // Rebuild order from DOM
                     const items = strip.querySelectorAll('.fi-workspace-tab')
                     const newOrder = []
                     items.forEach((el, i) => {
@@ -324,7 +314,6 @@ function workspaceTabs({
             })
         },
 
-        // Closed tabs history
         pushClosed(tab) {
             this.closedTabs.unshift({
                 url: tab.url,
@@ -345,9 +334,7 @@ function workspaceTabs({
             this.showClosedMenu = false
         },
 
-        // Navigation interception
         interceptNavigation() {
-            // Middle-click opens in new tab
             document.addEventListener('auxclick', (e) => {
                 if (e.button !== 1) return
                 const link = e.target.closest('a[href]')
@@ -357,17 +344,13 @@ function workspaceTabs({
                     const url = new URL(link.href)
                     if (url.origin !== window.location.origin) return
                     const path = url.pathname + url.search
-                    if (this.isExcluded(path)) return
+                    if (isExcluded(path)) return
 
                     e.preventDefault()
-                    const tab = this.addTab(path, translations.loading || 'Loading...')
-                    // Don't navigate — just add the tab. User can click it to load.
-                } catch {
-                    // Invalid URL, ignore
-                }
+                    this.addTab(path, translations.loading || 'Loading...')
+                } catch {}
             })
 
-            // Ctrl+click opens in new tab
             document.addEventListener(
                 'click',
                 (e) => {
@@ -379,21 +362,18 @@ function workspaceTabs({
                             const url = new URL(link.href)
                             if (url.origin !== window.location.origin) return
                             const path = url.pathname + url.search
-                            if (this.isExcluded(path)) return
+                            if (isExcluded(path)) return
 
                             e.preventDefault()
                             e.stopPropagation()
                             this.addTab(path, translations.loading || 'Loading...')
-                        } catch {
-                            // Invalid URL, ignore
-                        }
+                        } catch {}
                     }
                 },
                 true,
             )
         },
 
-        // Scroll helpers
         canScrollLeft: false,
         canScrollRight: false,
 
