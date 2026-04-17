@@ -36,20 +36,21 @@ function workspaceTabs({
 
     const isExcluded = (url) => excludeUrls.some((pattern) => url.startsWith(pattern))
 
+    const normalizeUrl = (url) => {
+        if (!url) return ''
+        try {
+            const u = new URL(url, window.location.origin)
+            // Remove trailing slash and normalize
+            let path = u.pathname.replace(/\/$/, '') || '/'
+            return path + u.search
+        } catch {
+            return url.replace(/\/$/, '') || '/'
+        }
+    }
+
     const urlsMatch = (url1, url2) => {
         if (!url1 || !url2) return false
-        try {
-            const u1 = url1 instanceof URL ? url1 : new URL(url1, window.location.origin)
-            const u2 = url2 instanceof URL ? url2 : new URL(url2, window.location.origin)
-            
-            // Compare pathname and search (ignoring origin/hash)
-            return u1.pathname === u2.pathname && u1.search === u2.search
-        } catch {
-            // Fallback to simple string comparison of paths
-            const path1 = url1.split('?')[0].split('#')[0]
-            const path2 = url2.split('?')[0].split('#')[0]
-            return path1 === path2
-        }
+        return normalizeUrl(url1) === normalizeUrl(url2)
     }
 
     return {
@@ -370,7 +371,13 @@ function workspaceTabs({
                     if (isExcluded(path)) return
 
                     e.preventDefault()
-                    this.addTab(path, translations.loading || 'Loading...')
+                    
+                    const existing = this.tabs.find((t) => urlsMatch(t.url, path))
+                    if (existing) {
+                        this.switchTab(existing.id)
+                    } else {
+                        this.addTab(path, translations.loading || 'Loading...')
+                    }
                 } catch {}
             })
 
@@ -389,7 +396,13 @@ function workspaceTabs({
 
                             e.preventDefault()
                             e.stopPropagation()
-                            this.addTab(path, translations.loading || 'Loading...')
+
+                            const existing = this.tabs.find((t) => urlsMatch(t.url, path))
+                            if (existing) {
+                                this.switchTab(existing.id)
+                            } else {
+                                this.addTab(path, translations.loading || 'Loading...')
+                            }
                         } catch {}
                     }
                 },
