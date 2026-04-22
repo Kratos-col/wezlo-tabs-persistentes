@@ -196,12 +196,12 @@ class WorkspaceTabsPlugin implements Plugin
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::CONTENT_BEFORE,
-            fn (): string => "@persist('tab-content-' . md5(request()->fullUrl()))<div>",
+            fn (): string => '<div wire:persist="tab-content-' . md5(request()->fullUrl()) . '">',
         );
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::CONTENT_AFTER,
-            fn (): string => "</div>@endpersist",
+            fn (): string => '</div>',
         );
     }
 }
