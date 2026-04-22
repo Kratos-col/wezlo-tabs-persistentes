@@ -5,6 +5,10 @@ Browser-like tabs for Filament panels. Open multiple pages in tabs without losin
 ## Features
 
 - **Tab per page** — Every navigation opens a new tab. Revisiting a URL activates the existing tab.
+- **Visual Snapshots (New v2.0)** — Uses UI snapshotting to restore page content instantly before Livewire loads, eliminating flashes.
+- **Scroll Restoration (New v2.0)** — Remembers and restores the exact scroll position for every tab.
+- **Resource Grouping (New v2.0)** — Keeps nested navigations (like index to edit or sub-tabs) within the same workspace tab.
+- **Auto-close Create (New v2.0)** — Automatically closes "Create" tabs after a successful record submission.
 - **Drag to reorder** — Rearrange tabs via drag-and-drop (powered by SortableJS).
 - **Pin tabs** — Double-click a tab to pin/unpin it. Pinned tabs can't be closed and stick to the left.
 - **Context menu** — Right-click any tab for: Close, Close Others, Close to the Right, Duplicate, Pin/Unpin, Close All.
@@ -85,6 +89,9 @@ WorkspaceTabsPlugin::make()
     ->excludeUrls(['/admin/login'])        // URL prefixes to never track as tabs
     ->contextMenu(false)                   // Disable right-click context menu
     ->dragReorder(false)                   // Disable drag-to-reorder
+    ->autoCloseCreateTabs(false)           // Disable auto-closing create tabs (default: true)
+    ->snapshots(false)                     // Disable visual snapshots (default: true)
+    ->scrollRestoration(false)             // Disable scroll restoration (default: true)
 ```
 
 ## Usage
@@ -122,6 +129,8 @@ When tabs are closed, they're stored in a history list. Click the dropdown arrow
 ## How it works
 
 - Tab state (URLs, labels, order, pinned status) is stored client-side in `localStorage` using Alpine.js `$persist()`.
+- **UI Snapshots**: Before leaving a tab, the plugin saves a snapshot of the main content area in `sessionStorage`. When returning, this snapshot is restored immediately while Livewire loads the live state in the background.
+- **Scroll tracking**: Window scroll positions are saved per tab and restored upon activation.
 - Switching tabs triggers `Livewire.navigate()` for SPA-style page transitions.
 - Page titles are automatically extracted from `document.title` on each navigation.
 - The tab bar is injected via Filament's `TOPBAR_AFTER` render hook — no template modifications needed.
