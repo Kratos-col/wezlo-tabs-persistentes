@@ -211,7 +211,7 @@
     position: absolute;
     right: 0;
     top: 100%;
-    z-index: 50;
+    z-index: 9999;
     min-width: 12rem;
     max-width: 20rem;
     border-radius: 0.5rem;
@@ -253,7 +253,7 @@
 /* Context menu */
 .fi-workspace-tabs-context-menu {
     position: absolute;
-    z-index: 50;
+    z-index: 9999;
     min-width: 10rem;
     border-radius: 0.5rem;
     border: 1px solid rgb(229 231 235);
