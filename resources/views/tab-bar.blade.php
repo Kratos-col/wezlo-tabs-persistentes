@@ -8,6 +8,8 @@
         enableContextMenu: @js($enableContextMenu),
         enableDragReorder: @js($enableDragReorder),
         autoCloseCreateTabs: @js($autoCloseCreateTabs),
+        enableSnapshots: @js($enableSnapshots),
+        enableScrollRestoration: @js($enableScrollRestoration),
         translations: @js($translations ?? [
             'new_tab' => __('wezlo-tabs-persistentes::tabs.new_tab'),
             'loading' => __('wezlo-tabs-persistentes::tabs.loading'),

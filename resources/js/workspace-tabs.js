@@ -16,8 +16,9 @@ function workspaceTabs({
     persistKey,
     excludeUrls,
     enableContextMenu,
-    enableDragReorder,
     autoCloseCreateTabs,
+    enableSnapshots,
+    enableScrollRestoration,
     translations = {},
 }) {
     // Helper functions in closure scope (more robust than 'this' methods)
@@ -52,6 +53,14 @@ function workspaceTabs({
     const urlsMatch = (url1, url2) => {
         if (!url1 || !url2) return false
         return normalizeUrl(url1) === normalizeUrl(url2)
+    }
+
+    const getPath = (url) => {
+        try {
+            return new URL(url, window.location.origin).pathname
+        } catch {
+            return url.split('?')[0]
+        }
     }
 
     return {
@@ -135,34 +144,45 @@ function workspaceTabs({
             const url = currentUrl()
             if (isExcluded(url)) return
 
+            // Capture state of the tab we are leaving
+            if (this.activeTabId) {
+                this.captureState(this.activeTabId)
+            }
+
             const label = extractTitle()
             const icon = fetchIcon()
 
             // Handle auto-closing of 'create' tabs after successful submission/navigation
             if (autoCloseCreateTabs && this.activeTab && !urlsMatch(this.activeTab.url, url)) {
-                // If the active tab was a create page, we close it as it has likely served its purpose
                 if (this.activeTab.url.endsWith('/create')) {
                     this.removeTab(this.activeTabId, false)
                 }
             }
             
-            // Find existing tab with strict matching
-            const existingIdx = this.tabs.findIndex((t) => urlsMatch(t.url, url))
+            // Find existing tab: Try strict match first, then path-based match for nested resources/tabs
+            let existingIdx = this.tabs.findIndex((t) => urlsMatch(t.url, url))
+            if (existingIdx === -1) {
+                const path = getPath(url)
+                existingIdx = this.tabs.findIndex((t) => getPath(t.url) === path)
+            }
 
             if (existingIdx !== -1) {
                 const existing = this.tabs[existingIdx]
-                // console.log('[WorkspaceTabs] Syncing existing tab:', label)
                 existing.label = label
                 existing.icon = icon
                 existing.url = url
                 this.activeTabId = existing.id
             } else {
-                // console.log('[WorkspaceTabs] Adding new tab for:', url)
                 this.addTab(url, label, false, icon)
             }
 
             this.isPopstate = false
-            this.$nextTick(() => this.updateScrollState())
+            
+            // Restore state (scroll, etc) for the new active tab
+            this.$nextTick(() => {
+                this.restoreState(this.activeTabId)
+                this.updateScrollState()
+            })
         },
 
         addTab(url, label, pinned = false, icon = null) {
@@ -206,8 +226,13 @@ function workspaceTabs({
             const tab = this.tabs.find((t) => t.id === tabId)
             if (!tab) return
 
+            if (this.activeTabId) {
+                this.captureState(this.activeTabId)
+            }
+
             if (urlsMatch(tab.url, currentUrl())) {
                 this.activeTabId = tabId
+                this.restoreState(tabId)
                 return
             }
 
@@ -439,6 +464,48 @@ function workspaceTabs({
 
         scrollRight() {
             this.$refs.tabStrip?.scrollBy({ left: 200, behavior: 'smooth' })
+        },
+
+        captureState(tabId) {
+            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!tab) return
+
+            if (enableScrollRestoration) {
+                tab.scrollX = window.scrollX
+                tab.scrollY = window.scrollY
+            }
+
+            if (enableSnapshots) {
+                const content = document.querySelector('.fi-main-ctn') || document.querySelector('main')
+                if (content) {
+                    try {
+                        sessionStorage.setItem(`${persistKey}_snapshot_${tabId}`, content.innerHTML)
+                    } catch (e) {}
+                }
+            }
+        },
+
+        restoreState(tabId) {
+            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!tab) return
+
+            if (enableSnapshots) {
+                const snapshot = sessionStorage.getItem(`${persistKey}_snapshot_${tabId}`)
+                const content = document.querySelector('.fi-main-ctn') || document.querySelector('main')
+                if (snapshot && content && !urlsMatch(tab.url, currentUrl())) {
+                    content.innerHTML = snapshot
+                }
+            }
+
+            this.$nextTick(() => {
+                if (enableScrollRestoration) {
+                    window.scrollTo({
+                        left: tab.scrollX || 0,
+                        top: tab.scrollY || 0,
+                        behavior: 'instant',
+                    })
+                }
+            })
         },
     }
 }

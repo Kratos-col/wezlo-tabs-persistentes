@@ -14,6 +14,8 @@ it('renders the tab bar with premium assets and new features', function () {
         'enableContextMenu' => true,
         'enableDragReorder' => true,
         'autoCloseCreateTabs' => false,
+        'enableSnapshots' => true,
+        'enableScrollRestoration' => false,
         'translations' => ['new_tab' => 'Custom New Tab Label'],
     ]);
 
@@ -38,4 +40,6 @@ it('renders the tab bar with premium assets and new features', function () {
     expect($html)->toContain('fi-workspace-tabs-context-menu');
     expect($html)->toContain('fi-workspace-tabs-closed-menu');
     expect($html)->toContain('autoCloseCreateTabs: false');
+    expect($html)->toContain('enableSnapshots: true');
+    expect($html)->toContain('enableScrollRestoration: false');
 });

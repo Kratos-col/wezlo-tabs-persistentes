@@ -23,6 +23,10 @@ class WorkspaceTabsPlugin implements Plugin
     
     protected bool $autoCloseCreateTabsEnabled = true;
 
+    protected bool $snapshotsEnabled = true;
+
+    protected bool $scrollRestorationEnabled = true;
+
     public static function make(): static
     {
         return app(static::class);
@@ -105,6 +109,30 @@ class WorkspaceTabsPlugin implements Plugin
         return $this->autoCloseCreateTabsEnabled;
     }
 
+    public function snapshots(bool $condition = true): static
+    {
+        $this->snapshotsEnabled = $condition;
+
+        return $this;
+    }
+
+    public function areSnapshotsEnabled(): bool
+    {
+        return $this->snapshotsEnabled;
+    }
+
+    public function scrollRestoration(bool $condition = true): static
+    {
+        $this->scrollRestorationEnabled = $condition;
+
+        return $this;
+    }
+
+    public function isScrollRestorationEnabled(): bool
+    {
+        return $this->scrollRestorationEnabled;
+    }
+
     public function register(Panel $panel): void {}
 
     public function boot(Panel $panel): void
@@ -118,6 +146,8 @@ class WorkspaceTabsPlugin implements Plugin
                 'enableContextMenu' => $this->contextMenuEnabled,
                 'enableDragReorder' => $this->dragReorderEnabled,
                 'autoCloseCreateTabs' => $this->autoCloseCreateTabsEnabled,
+                'enableSnapshots' => $this->snapshotsEnabled,
+                'enableScrollRestoration' => $this->scrollRestorationEnabled,
             ]),
         );
     }

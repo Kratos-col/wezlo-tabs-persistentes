@@ -46,4 +46,16 @@ it('can toggle features', function () {
     expect($plugin->isAutoCloseCreateTabsEnabled())->toBeFalse();
     $plugin->autoCloseCreateTabs(true);
     expect($plugin->isAutoCloseCreateTabsEnabled())->toBeTrue();
+
+    // Snapshots
+    $plugin->snapshots(false);
+    expect($plugin->areSnapshotsEnabled())->toBeFalse();
+    $plugin->snapshots(true);
+    expect($plugin->areSnapshotsEnabled())->toBeTrue();
+
+    // Scroll Restoration
+    $plugin->scrollRestoration(false);
+    expect($plugin->isScrollRestorationEnabled())->toBeFalse();
+    $plugin->scrollRestoration(true);
+    expect($plugin->isScrollRestorationEnabled())->toBeTrue();
 });
