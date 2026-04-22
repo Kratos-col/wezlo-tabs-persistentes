@@ -26,5 +26,13 @@ class WorkspaceTabsServiceProvider extends PackageServiceProvider
             Css::make('workspace-tabs', __DIR__ . '/../resources/dist/workspace-tabs.css'),
             \Filament\Support\Assets\Js::make('workspace-tabs', __DIR__ . '/../resources/dist/workspace-tabs.js'),
         ], package: 'wezlo/wezlo-tabs-persistentes');
+
+        \Illuminate\Support\Facades\Route::post('wezlo-tabs-persistentes/close', function (\Illuminate\Http\Request $request) {
+            $url = $request->input('url');
+            $tabs = session()->get('wezlo_tabs_open_urls', []);
+            $tabs = array_values(array_filter($tabs, fn($t) => $t !== $url));
+            session()->put('wezlo_tabs_open_urls', $tabs);
+            return response()->json(['status' => 'ok']);
+        })->name('wezlo-tabs-persistentes.close')->middleware(['web']);
     }
 }

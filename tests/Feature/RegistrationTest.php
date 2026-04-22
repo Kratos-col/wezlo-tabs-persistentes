@@ -16,6 +16,8 @@ it('renders the tab bar with premium assets and new features', function () {
         'autoCloseCreateTabs' => false,
         'enableSnapshots' => true,
         'enableScrollRestoration' => false,
+        'encryptionKey' => 'test-key',
+        'openTabs' => [],
         'translations' => ['new_tab' => 'Custom New Tab Label'],
     ]);
 

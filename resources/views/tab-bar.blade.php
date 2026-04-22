@@ -1,3 +1,4 @@
+@persist($persistKey)
 <div
     wire:persist="fi-workspace-tabs"
     x-cloak
@@ -10,6 +11,7 @@
         autoCloseCreateTabs: @js($autoCloseCreateTabs),
         enableSnapshots: @js($enableSnapshots),
         enableScrollRestoration: @js($enableScrollRestoration),
+        encryptionKey: @js($encryptionKey),
         translations: @js($translations ?? [
             'new_tab' => __('wezlo-tabs-persistentes::tabs.new_tab'),
             'loading' => __('wezlo-tabs-persistentes::tabs.loading'),
@@ -165,4 +167,16 @@
             {{ __('wezlo-tabs-persistentes::tabs.context_menu.close_all') }}
         </button>
     </div>
+
+    {{-- Parking slots for background tabs --}}
+    <div style="display: none !important;" aria-hidden="true">
+        @foreach($openTabs as $url)
+            @if($url !== request()->fullUrl())
+                @persist('tab-content-' . md5($url))
+                    {{-- Livewire will move the DOM here when navigating away --}}
+                @endpersist
+            @endif
+        @endforeach
+    </div>
 </div>
+@endpersist

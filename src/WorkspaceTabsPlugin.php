@@ -135,8 +135,49 @@ class WorkspaceTabsPlugin implements Plugin
 
     public function register(Panel $panel): void {}
 
+    public function getEncryptionKey(): string
+    {
+        if (! session()->has('wezlo_tabs_encryption_key')) {
+            session()->put('wezlo_tabs_encryption_key', str()->random(32));
+        }
+
+        return session()->get('wezlo_tabs_encryption_key');
+    }
+
+    public function trackCurrentTab(): void
+    {
+        $url = request()->fullUrl();
+        if ($this->isExcluded($url)) {
+            return;
+        }
+
+        $tabs = session()->get('wezlo_tabs_open_urls', []);
+        if (! in_array($url, $tabs)) {
+            $tabs[] = $url;
+            session()->put('wezlo_tabs_open_urls', $tabs);
+        }
+    }
+
+    protected function isExcluded(string $url): bool
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        foreach ($this->excludeUrls as $pattern) {
+            if (str_starts_with($path, $pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function getOpenTabs(): array
+    {
+        return session()->get('wezlo_tabs_open_urls', []);
+    }
+
     public function boot(Panel $panel): void
     {
+        $this->trackCurrentTab();
+
         FilamentView::registerRenderHook(
             PanelsRenderHook::TOPBAR_AFTER,
             fn (): View => view('wezlo-tabs-persistentes::tab-bar', [
@@ -148,7 +189,19 @@ class WorkspaceTabsPlugin implements Plugin
                 'autoCloseCreateTabs' => $this->autoCloseCreateTabsEnabled,
                 'enableSnapshots' => $this->snapshotsEnabled,
                 'enableScrollRestoration' => $this->scrollRestorationEnabled,
+                'encryptionKey' => $this->getEncryptionKey(),
+                'openTabs' => $this->getOpenTabs(),
             ]),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::CONTENT_BEFORE,
+            fn (): string => "@persist('tab-content-' . md5(request()->fullUrl()))<div>",
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::CONTENT_AFTER,
+            fn (): string => "</div>@endpersist",
         );
     }
 }

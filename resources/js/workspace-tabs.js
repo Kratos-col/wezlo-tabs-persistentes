@@ -11,6 +11,40 @@ function generateId() {
     })
 }
 
+const encrypt = (data, key) => {
+    if (!key || !data) return data
+    try {
+        const json = JSON.stringify(data)
+        let result = ''
+        for (let i = 0; i < json.length; i++) {
+            result += String.fromCharCode(
+                json.charCodeAt(i) ^ key.charCodeAt(i % key.length),
+            )
+        }
+        return btoa(unescape(encodeURIComponent(result)))
+    } catch (e) {
+        console.error('[WorkspaceTabs] Encryption failed:', e)
+        return data
+    }
+}
+
+const decrypt = (encoded, key) => {
+    if (!key || !encoded || typeof encoded !== 'string') return encoded
+    try {
+        const json = decodeURIComponent(escape(atob(encoded)))
+        let result = ''
+        for (let i = 0; i < json.length; i++) {
+            result += String.fromCharCode(
+                json.charCodeAt(i) ^ key.charCodeAt(i % key.length),
+            )
+        }
+        return JSON.parse(result)
+    } catch (e) {
+        // If decryption fails, it might be unencrypted data or a key mismatch
+        return encoded
+    }
+}
+
 function workspaceTabs({
     maxTabs,
     persistKey,
@@ -20,6 +54,7 @@ function workspaceTabs({
     autoCloseCreateTabs,
     enableSnapshots,
     enableScrollRestoration,
+    encryptionKey,
     translations = {},
 }) {
     // Helper functions in closure scope (more robust than 'this' methods)
@@ -64,10 +99,24 @@ function workspaceTabs({
         }
     }
 
+    const encryptedStorage = {
+        getItem: (key) => {
+            const val = localStorage.getItem(key)
+            return decrypt(val, encryptionKey)
+        },
+        setItem: (key, val) => {
+            localStorage.setItem(key, encrypt(val, encryptionKey))
+        },
+    }
+
     return {
-        tabs: Alpine.$persist([]).as(`${persistKey}_tabs`),
-        activeTabId: Alpine.$persist(null).as(`${persistKey}_active`),
-        closedTabs: Alpine.$persist([]).as(`${persistKey}_closed`),
+        tabs: Alpine.$persist([]).as(`${persistKey}_tabs`).using(encryptedStorage),
+        activeTabId: Alpine.$persist(null)
+            .as(`${persistKey}_active`)
+            .using(encryptedStorage),
+        closedTabs: Alpine.$persist([])
+            .as(`${persistKey}_closed`)
+            .using(encryptedStorage),
 
         contextMenu: { open: false, x: 0, y: 0, tabId: null },
         sortableInstance: null,
@@ -276,9 +325,22 @@ function workspaceTabs({
             if (idx === -1) return
 
             const wasActive = this.activeTabId === tabId
+            const tabUrl = this.tabs[idx].url
 
             this.tabs.splice(idx, 1)
             this.reindex()
+
+            // Sync with server session to free up persistence slot
+            fetch('/wezlo-tabs-persistentes/close', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN':
+                        document.querySelector('meta[name="csrf-token"]')?.content ||
+                        '',
+                },
+                body: JSON.stringify({ url: window.location.origin + tabUrl }),
+            })
 
             if (activate && wasActive && this.tabs.length > 0) {
                 const sorted = this.sortedTabs
@@ -499,10 +561,15 @@ function workspaceTabs({
             }
 
             if (enableSnapshots) {
-                const content = document.querySelector('.fi-main-ctn') || document.querySelector('main')
+                const content =
+                    document.querySelector('.fi-main-ctn') ||
+                    document.querySelector('main')
                 if (content) {
                     try {
-                        sessionStorage.setItem(`${persistKey}_snapshot_${tabId}`, content.innerHTML)
+                        sessionStorage.setItem(
+                            `${persistKey}_snapshot_${tabId}`,
+                            encrypt(content.innerHTML, encryptionKey),
+                        )
                     } catch (e) {}
                 }
             }
@@ -513,9 +580,14 @@ function workspaceTabs({
             if (!tab) return
 
             if (enableSnapshots) {
-                const snapshot = sessionStorage.getItem(`${persistKey}_snapshot_${tabId}`)
-                const content = document.querySelector('.fi-main-ctn') || document.querySelector('main')
-                
+                const encoded = sessionStorage.getItem(
+                    `${persistKey}_snapshot_${tabId}`,
+                )
+                const snapshot = decrypt(encoded, encryptionKey)
+                const content =
+                    document.querySelector('.fi-main-ctn') ||
+                    document.querySelector('main')
+
                 if (snapshot && content) {
                     if (content.innerHTML !== snapshot) {
                         content.innerHTML = snapshot
