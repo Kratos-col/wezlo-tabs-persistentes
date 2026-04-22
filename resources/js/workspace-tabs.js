@@ -16,6 +16,7 @@ function workspaceTabs({
     persistKey,
     excludeUrls,
     enableContextMenu,
+    enableDragReorder,
     autoCloseCreateTabs,
     enableSnapshots,
     enableScrollRestoration,
@@ -110,6 +111,20 @@ function workspaceTabs({
 
             document.addEventListener('livewire:navigated', handleNavigated)
             window.addEventListener('popstate', handlePopstate)
+            
+            // Capture state whenever Livewire updates any component
+            document.addEventListener('livewire:update', () => {
+                if (this.activeTabId) {
+                    this.captureState(this.activeTabId)
+                }
+            })
+
+            // Capture state right before navigating away
+            document.addEventListener('livewire:navigating', () => {
+                if (this.activeTabId) {
+                    this.captureState(this.activeTabId)
+                }
+            })
 
             this.interceptNavigation()
 
@@ -142,7 +157,14 @@ function workspaceTabs({
 
         syncCurrentPage() {
             const url = currentUrl()
-            if (isExcluded(url)) return
+            
+            if (isExcluded(url)) {
+                // If we are on the login page, clear all persistent state for security
+                if (url.includes('/login') || url.includes('/logout')) {
+                    this.clearAllData()
+                }
+                return
+            }
 
             // Capture state of the tab we are leaving
             if (this.activeTabId) {
@@ -178,9 +200,10 @@ function workspaceTabs({
 
             this.isPopstate = false
             
-            // Restore state (scroll, etc) for the new active tab
+            // Restore state (scroll, snapshots) for the new active tab
+            // We do this immediately to minimize flickering, before Alpine/Livewire fully settle
+            this.restoreState(this.activeTabId)
             this.$nextTick(() => {
-                this.restoreState(this.activeTabId)
                 this.updateScrollState()
             })
         },
@@ -492,20 +515,37 @@ function workspaceTabs({
             if (enableSnapshots) {
                 const snapshot = sessionStorage.getItem(`${persistKey}_snapshot_${tabId}`)
                 const content = document.querySelector('.fi-main-ctn') || document.querySelector('main')
-                if (snapshot && content && !urlsMatch(tab.url, currentUrl())) {
-                    content.innerHTML = snapshot
+                
+                if (snapshot && content) {
+                    if (content.innerHTML !== snapshot) {
+                        content.innerHTML = snapshot
+                    }
                 }
             }
 
-            this.$nextTick(() => {
-                if (enableScrollRestoration) {
-                    window.scrollTo({
-                        left: tab.scrollX || 0,
-                        top: tab.scrollY || 0,
-                        behavior: 'instant',
-                    })
+            if (enableScrollRestoration) {
+                window.scrollTo({
+                    left: tab.scrollX || 0,
+                    top: tab.scrollY || 0,
+                    behavior: 'instant',
+                })
+            }
+        },
+
+        clearAllData() {
+            // Clear snapshots from sessionStorage
+            Object.keys(sessionStorage).forEach((key) => {
+                if (key.startsWith(`${persistKey}_snapshot_`)) {
+                    sessionStorage.removeItem(key)
                 }
             })
+
+            // Reset Alpine state (which will sync to localStorage via $persist)
+            this.tabs = []
+            this.activeTabId = null
+            this.closedTabs = []
+            
+            // console.log('[WorkspaceTabs] Persistent state cleared')
         },
     }
 }
