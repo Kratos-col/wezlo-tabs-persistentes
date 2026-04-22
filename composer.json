@@ -4,6 +4,17 @@
     "keywords": ["laravel", "filament", "tabs", "workspace", "browser-tabs"],
     "license": "MIT",
     "type": "library",
+    "homepage": "https://github.com/Kratos-col/wezlo-tabs-persistentes",
+    "support": {
+        "issues": "https://github.com/Kratos-col/wezlo-tabs-persistentes/issues",
+        "source": "https://github.com/Kratos-col/wezlo-tabs-persistentes"
+    },
+    "authors": [
+        {
+            "name": "Kratos-col",
+            "homepage": "https://github.com/Kratos-col"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "filament/filament": "^4.0 || ^5.0",

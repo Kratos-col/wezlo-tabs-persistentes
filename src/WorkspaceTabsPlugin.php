@@ -20,6 +20,8 @@ class WorkspaceTabsPlugin implements Plugin
     protected bool $contextMenuEnabled = true;
 
     protected bool $dragReorderEnabled = true;
+    
+    protected bool $autoCloseCreateTabsEnabled = true;
 
     public static function make(): static
     {
@@ -91,6 +93,18 @@ class WorkspaceTabsPlugin implements Plugin
         return $this->dragReorderEnabled;
     }
 
+    public function autoCloseCreateTabs(bool $condition = true): static
+    {
+        $this->autoCloseCreateTabsEnabled = $condition;
+
+        return $this;
+    }
+
+    public function isAutoCloseCreateTabsEnabled(): bool
+    {
+        return $this->autoCloseCreateTabsEnabled;
+    }
+
     public function register(Panel $panel): void {}
 
     public function boot(Panel $panel): void
@@ -103,6 +117,7 @@ class WorkspaceTabsPlugin implements Plugin
                 'excludeUrls' => $this->excludeUrls,
                 'enableContextMenu' => $this->contextMenuEnabled,
                 'enableDragReorder' => $this->dragReorderEnabled,
+                'autoCloseCreateTabs' => $this->autoCloseCreateTabsEnabled,
             ]),
         );
     }

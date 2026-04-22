@@ -13,6 +13,7 @@ it('renders the tab bar with premium assets and new features', function () {
         'excludeUrls' => ['/admin/login'],
         'enableContextMenu' => true,
         'enableDragReorder' => true,
+        'autoCloseCreateTabs' => false,
         'translations' => ['new_tab' => 'Custom New Tab Label'],
     ]);
 
@@ -36,4 +37,5 @@ it('renders the tab bar with premium assets and new features', function () {
     // 5. Verify the existence of the Context Menu and Dropdown (Feature Complete)
     expect($html)->toContain('fi-workspace-tabs-context-menu');
     expect($html)->toContain('fi-workspace-tabs-closed-menu');
+    expect($html)->toContain('autoCloseCreateTabs: false');
 });

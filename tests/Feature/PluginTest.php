@@ -40,4 +40,10 @@ it('can toggle features', function () {
     expect($plugin->isDragReorderEnabled())->toBeFalse();
     $plugin->dragReorder(true);
     expect($plugin->isDragReorderEnabled())->toBeTrue();
+
+    // Auto Close Create Tabs
+    $plugin->autoCloseCreateTabs(false);
+    expect($plugin->isAutoCloseCreateTabsEnabled())->toBeFalse();
+    $plugin->autoCloseCreateTabs(true);
+    expect($plugin->isAutoCloseCreateTabsEnabled())->toBeTrue();
 });

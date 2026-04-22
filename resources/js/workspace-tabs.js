@@ -17,6 +17,7 @@ function workspaceTabs({
     excludeUrls,
     enableContextMenu,
     enableDragReorder,
+    autoCloseCreateTabs,
     translations = {},
 }) {
     // Helper functions in closure scope (more robust than 'this' methods)
@@ -136,6 +137,14 @@ function workspaceTabs({
 
             const label = extractTitle()
             const icon = fetchIcon()
+
+            // Handle auto-closing of 'create' tabs after successful submission/navigation
+            if (autoCloseCreateTabs && this.activeTab && !urlsMatch(this.activeTab.url, url)) {
+                // If the active tab was a create page, we close it as it has likely served its purpose
+                if (this.activeTab.url.endsWith('/create')) {
+                    this.removeTab(this.activeTabId, false)
+                }
+            }
             
             // Find existing tab with strict matching
             const existingIdx = this.tabs.findIndex((t) => urlsMatch(t.url, url))

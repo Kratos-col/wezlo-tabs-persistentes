@@ -7,6 +7,7 @@
         excludeUrls: @js($excludeUrls),
         enableContextMenu: @js($enableContextMenu),
         enableDragReorder: @js($enableDragReorder),
+        autoCloseCreateTabs: @js($autoCloseCreateTabs),
         translations: @js($translations ?? [
             'new_tab' => __('wezlo-tabs-persistentes::tabs.new_tab'),
             'loading' => __('wezlo-tabs-persistentes::tabs.loading'),
