@@ -100,12 +100,30 @@ function workspaceTabs({
     }
 
     const encryptedStorage = {
-        read: (val) => {
-            return decrypt(val, encryptionKey)
+        getItem: (key) => {
+            const val = localStorage.getItem(key)
+            if (!val) return null
+            try {
+                // Decrypt the raw stored string
+                const decrypted = decrypt(val, encryptionKey)
+                // Return as JSON string because Alpine's $persist internal 
+                // logic always calls JSON.parse() on the result of getItem()
+                return JSON.stringify(decrypted)
+            } catch (e) {
+                return val
+            }
         },
-        write: (val) => {
-            return JSON.stringify(encrypt(val, encryptionKey))
+        setItem: (key, val) => {
+            try {
+                // Alpine already JSON.stringifies the value before calling setItem.
+                // We parse it back to encrypt the actual data structure.
+                const data = JSON.parse(val)
+                localStorage.setItem(key, encrypt(data, encryptionKey))
+            } catch (e) {
+                localStorage.setItem(key, val)
+            }
         },
+        removeItem: (key) => localStorage.removeItem(key),
     }
 
     return {
