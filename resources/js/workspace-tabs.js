@@ -100,12 +100,11 @@ function workspaceTabs({
     }
 
     const encryptedStorage = {
-        getItem: (key) => {
-            const val = localStorage.getItem(key)
+        read: (val) => {
             return decrypt(val, encryptionKey)
         },
-        setItem: (key, val) => {
-            localStorage.setItem(key, encrypt(val, encryptionKey))
+        write: (val) => {
+            return JSON.stringify(encrypt(val, encryptionKey))
         },
     }
 
