@@ -12,9 +12,11 @@ function generateId() {
 }
 
 const encrypt = (data, key) => {
-    if (!key || !data) return data
+    if (!data) return data
     try {
         const json = JSON.stringify(data)
+        if (!key) return json
+        
         let result = ''
         for (let i = 0; i < json.length; i++) {
             result += String.fromCharCode(
@@ -24,12 +26,24 @@ const encrypt = (data, key) => {
         return btoa(unescape(encodeURIComponent(result)))
     } catch (e) {
         console.error('[WorkspaceTabs] Encryption failed:', e)
-        return data
+        return typeof data === 'string' ? data : JSON.stringify(data)
     }
 }
 
 const decrypt = (encoded, key) => {
-    if (!key || !encoded || typeof encoded !== 'string') return encoded
+    if (!encoded || typeof encoded !== 'string') return encoded
+    
+    // If it's a JSON string (likely unencrypted data), parse it directly
+    if (encoded.startsWith('[') || encoded.startsWith('{')) {
+        try {
+            return JSON.parse(encoded)
+        } catch (e) {
+            return null
+        }
+    }
+
+    if (!key) return null
+
     try {
         const json = decodeURIComponent(escape(atob(encoded)))
         let result = ''
@@ -41,7 +55,9 @@ const decrypt = (encoded, key) => {
         return JSON.parse(result)
     } catch (e) {
         // If decryption fails, it might be unencrypted data or a key mismatch
-        return encoded
+        // If it was already a valid JSON string, we would have caught it above.
+        // Return null to signal failure so the driver can use the default value.
+        return null
     }
 }
 
@@ -106,11 +122,15 @@ function workspaceTabs({
             try {
                 // Decrypt the raw stored string
                 const decrypted = decrypt(val, encryptionKey)
+                
+                // If decryption failed, return null so Alpine uses the default value ([])
+                if (decrypted === null) return null
+                
                 // Return as JSON string because Alpine's $persist internal 
                 // logic always calls JSON.parse() on the result of getItem()
                 return JSON.stringify(decrypted)
             } catch (e) {
-                return val
+                return null
             }
         },
         setItem: (key, val) => {
@@ -141,14 +161,16 @@ function workspaceTabs({
         showClosedMenu: false,
 
         get pinnedTabs() {
+            if (!Array.isArray(this.tabs)) return []
             return this.tabs
-                .filter((t) => t.pinned)
+                .filter((t) => t && t.pinned)
                 .sort((a, b) => a.order - b.order)
         },
 
         get unpinnedTabs() {
+            if (!Array.isArray(this.tabs)) return []
             return this.tabs
-                .filter((t) => !t.pinned)
+                .filter((t) => t && !t.pinned)
                 .sort((a, b) => a.order - b.order)
         },
 
@@ -157,12 +179,16 @@ function workspaceTabs({
         },
 
         get activeTab() {
-            return this.tabs.find((t) => t.id === this.activeTabId)
+            if (!Array.isArray(this.tabs)) return null
+            return this.tabs.find((t) => t && t.id === this.activeTabId)
         },
 
         init() {
+            // Safeguard: Ensure state is always an array
+            if (!Array.isArray(this.tabs)) this.tabs = []
+            if (!Array.isArray(this.closedTabs)) this.closedTabs = []
+
             // Sync immediately on boot to handle initial state or full reloads
-            this.$nextTick(() => this.syncCurrentPage())
 
             // Global listeners should be attached to the document/window
             // each instance needs to react to these to stay in sync
@@ -248,10 +274,14 @@ function workspaceTabs({
             }
             
             // Find existing tab: Try strict match first, then path-based match for nested resources/tabs
-            let existingIdx = this.tabs.findIndex((t) => urlsMatch(t.url, url))
+            if (!Array.isArray(this.tabs)) {
+                this.tabs = []
+            }
+
+            let existingIdx = this.tabs.findIndex((t) => t && urlsMatch(t.url, url))
             if (existingIdx === -1) {
                 const path = getPath(url)
-                existingIdx = this.tabs.findIndex((t) => getPath(t.url) === path)
+                existingIdx = this.tabs.findIndex((t) => t && getPath(t.url) === path)
             }
 
             if (existingIdx !== -1) {
@@ -275,10 +305,14 @@ function workspaceTabs({
         },
 
         addTab(url, label, pinned = false, icon = null) {
+            if (!Array.isArray(this.tabs)) {
+                this.tabs = []
+            }
+
             // Check if already reached max tabs limit
             if (this.tabs.length >= maxTabs) {
                 const oldestUnpinned = this.unpinnedTabs.find(
-                    (t) => t.id !== this.activeTabId,
+                    (t) => t && t.id !== this.activeTabId,
                 )
                 if (oldestUnpinned) {
                     this.removeTab(oldestUnpinned.id, false)
@@ -312,7 +346,8 @@ function workspaceTabs({
         },
 
         switchTab(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab) return
 
             if (this.activeTabId) {
@@ -330,7 +365,8 @@ function workspaceTabs({
         },
 
         closeTab(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab || tab.pinned) return
 
             this.pushClosed(tab)
@@ -338,7 +374,8 @@ function workspaceTabs({
         },
 
         removeTab(tabId, activate) {
-            const idx = this.tabs.findIndex((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const idx = this.tabs.findIndex((t) => t && t.id === tabId)
             if (idx === -1) return
 
             const wasActive = this.activeTabId === tabId
@@ -368,52 +405,59 @@ function workspaceTabs({
         },
 
         pinTab(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab) return
             tab.pinned = !tab.pinned
             this.reindex()
         },
 
         duplicateTab(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab) return
             const newTab = this.addTab(tab.url, tab.label)
             this.switchTab(newTab.id)
         },
 
         closeOthers(tabId) {
+            if (!Array.isArray(this.tabs)) return
             const toClose = this.tabs.filter(
-                (t) => t.id !== tabId && !t.pinned,
+                (t) => t && t.id !== tabId && !t.pinned,
             )
             toClose.forEach((t) => this.pushClosed(t))
-            this.tabs = this.tabs.filter((t) => t.id === tabId || t.pinned)
+            this.tabs = this.tabs.filter((t) => t && (t.id === tabId || t.pinned))
             this.reindex()
 
-            if (!this.tabs.find((t) => t.id === this.activeTabId)) {
+            if (!this.tabs.find((t) => t && t.id === this.activeTabId)) {
                 this.switchTab(tabId)
             }
         },
 
         closeToRight(tabId) {
+            if (!Array.isArray(this.tabs)) return
+
             const sorted = this.sortedTabs
-            const idx = sorted.findIndex((t) => t.id === tabId)
+            const idx = sorted.findIndex((t) => t && t.id === tabId)
             const toClose = sorted
                 .slice(idx + 1)
-                .filter((t) => !t.pinned)
+                .filter((t) => t && !t.pinned)
             const toCloseIds = new Set(toClose.map((t) => t.id))
             toClose.forEach((t) => this.pushClosed(t))
-            this.tabs = this.tabs.filter((t) => !toCloseIds.has(t.id))
+            this.tabs = this.tabs.filter((t) => t && !toCloseIds.has(t.id))
             this.reindex()
 
-            if (!this.tabs.find((t) => t.id === this.activeTabId)) {
+            if (!this.tabs.find((t) => t && t.id === this.activeTabId)) {
                 this.switchTab(tabId)
             }
         },
 
         closeAll() {
-            const toClose = this.tabs.filter((t) => !t.pinned)
+            if (!Array.isArray(this.tabs)) return
+
+            const toClose = this.tabs.filter((t) => t && !t.pinned)
             toClose.forEach((t) => this.pushClosed(t))
-            this.tabs = this.tabs.filter((t) => t.pinned)
+            this.tabs = this.tabs.filter((t) => t && t.pinned)
             this.reindex()
 
             if (this.tabs.length > 0 && !this.activeTab) {
@@ -422,9 +466,10 @@ function workspaceTabs({
         },
 
         reindex() {
-            this.pinnedTabs.forEach((t, i) => (t.order = i))
+            if (!Array.isArray(this.tabs)) return
+            this.pinnedTabs.forEach((t, i) => { if (t) t.order = i })
             this.unpinnedTabs.forEach(
-                (t, i) => (t.order = this.pinnedTabs.length + i),
+                (t, i) => { if (t) t.order = this.pinnedTabs.length + i },
             )
         },
 
@@ -446,12 +491,13 @@ function workspaceTabs({
         },
 
         getContextTab() {
-            return this.tabs.find((t) => t.id === this.contextMenu.tabId)
+            if (!Array.isArray(this.tabs)) return null
+            return this.tabs.find((t) => t && t.id === this.contextMenu.tabId)
         },
 
         initSortable() {
             const strip = this.$refs.tabStrip
-            if (!strip) return
+            if (!strip || !Array.isArray(this.tabs)) return
 
             this.sortableInstance = Sortable.create(strip, {
                 animation: 150,
@@ -461,13 +507,13 @@ function workspaceTabs({
                 draggable: '.fi-workspace-tab',
                 onEnd: (evt) => {
                     const tabId = evt.item.dataset.tabId
-                    if (!tabId) return
+                    if (!tabId || !Array.isArray(this.tabs)) return
 
                     const items = strip.querySelectorAll('.fi-workspace-tab')
                     const newOrder = []
                     items.forEach((el, i) => {
                         const id = el.dataset.tabId
-                        const tab = this.tabs.find((t) => t.id === id)
+                        const tab = this.tabs.find((t) => t && t.id === id)
                         if (tab) {
                             tab.order = i
                             newOrder.push(tab)
@@ -569,7 +615,8 @@ function workspaceTabs({
         },
 
         captureState(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab) return
 
             if (enableScrollRestoration) {
@@ -593,7 +640,8 @@ function workspaceTabs({
         },
 
         restoreState(tabId) {
-            const tab = this.tabs.find((t) => t.id === tabId)
+            if (!Array.isArray(this.tabs)) return
+            const tab = this.tabs.find((t) => t && t.id === tabId)
             if (!tab) return
 
             if (enableSnapshots) {
